@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -13,7 +14,14 @@ func main() {
 
 	log.Printf("BOT_TOKEN = %v\n", botToken)
 
-	client := CreateBotClient(botToken)
+	isOnline := false
+	onlineEnv := os.Getenv("ONLINE")
+	if len(onlineEnv) != 0 && strings.EqualFold("true", onlineEnv) {
+		log.Printf("Using online environment.")
+		isOnline = true
+	}
+
+	client := CreateBotClient(botToken, isOnline)
 	url := client.GetWebSocketUrl()
 	println(url)
 

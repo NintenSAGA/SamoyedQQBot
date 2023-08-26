@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	HOST = "https://sandbox.api.sgroup.qq.com"
-	GET  = "GET"
-	POST = "POST"
+	TEST_HOST   = "https://sandbox.api.sgroup.qq.com"
+	ONLINE_HOST = "https://api.sgroup.qq.com"
+	GET         = "GET"
+	POST        = "POST"
 )
 
 type BotClient struct {
@@ -26,15 +27,17 @@ type BotClient struct {
 	sndMsgChan chan SendMessageRequest
 	solver     *Solver
 	mineId     string
+	isOnline   bool
 }
 
-func CreateBotClient(botToken string) *BotClient {
+func CreateBotClient(botToken string, isOnline bool) *BotClient {
 	instance := &BotClient{
 		botToken:   botToken,
 		httpClient: &http.Client{},
 		rcvMsgChan: make(chan MessageVO, 10),
 		sndMsgChan: make(chan SendMessageRequest, 10),
 		solver:     createSolver(),
+		isOnline:   isOnline,
 	}
 
 	go instance.sendMessageHandler()
@@ -44,7 +47,13 @@ func CreateBotClient(botToken string) *BotClient {
 }
 
 func (b *BotClient) getRequest(method string, path string, body *string) *http.Request {
-	vUrl, _ := url.JoinPath(HOST, path)
+	var host string
+	if b.isOnline {
+		host = ONLINE_HOST
+	} else {
+		host = TEST_HOST
+	}
+	vUrl, _ := url.JoinPath(host, path)
 	var reader io.Reader
 	if body != nil {
 		reader = strings.NewReader(*body)
