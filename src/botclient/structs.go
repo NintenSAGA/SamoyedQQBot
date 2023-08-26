@@ -84,5 +84,18 @@ type UserVO struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
 	Avatar   string `json:"avatar"`
-	Bot      string `json:"bot"`
+	Bot      bool   `json:"bot"`
+}
+
+type SendMessageRequest struct {
+	channelId        string
+	Content          string              `json:"content"`
+	MessageReference *MessageReferenceVo `json:"message_reference"`
+	Image            string              `json:"image"`
+	MsgId            string              `json:"msg_id"`
+	EventId          string              `json:"event_id"`
+}
+
+type MessageReferenceVo struct {
+	MessageId string `json:"message_id"`
 }

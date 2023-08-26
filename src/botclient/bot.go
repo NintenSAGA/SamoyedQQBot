@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,13 +22,20 @@ const (
 type BotClient struct {
 	botToken   string
 	httpClient *http.Client
+	rcvMsgChan chan MessageVO
+	sndMsgChan chan SendMessageRequest
 }
 
 func CreateBotClient(botToken string) *BotClient {
 	instance := &BotClient{
 		botToken:   botToken,
 		httpClient: &http.Client{},
+		rcvMsgChan: make(chan MessageVO, 10),
+		sndMsgChan: make(chan SendMessageRequest, 10),
 	}
+
+	go instance.sendMessageHandler()
+	go instance.receiveMessageHandler()
 
 	return instance
 }
@@ -93,7 +101,7 @@ func (b *BotClient) EstablishWSConnection() {
 	var latestMessage *int
 	latestMessage = nil
 	readCh := make(chan []byte, 10)
-	go b.readMessageHandler(conn, readCh)
+	go b.wsReadMessageHandler(conn, readCh)
 
 	interval := time.Millisecond * time.Duration(heartbeatInterval)
 	log.Printf("Heartbeat interval: %v\n", interval)
@@ -106,12 +114,13 @@ func (b *BotClient) EstablishWSConnection() {
 		case msg := <-readCh:
 			logReceived(msg)
 			opMsg := getOp(msg)
+			latestMessage = &opMsg.S
 			switch opMsg.Op {
 			case 11: // Heartbeat
 			case 0: // Message
 				msgObj := MessageVO{}
 				json.Unmarshal(opMsg.D, &msgObj)
-				fmt.Printf("%v 发送了一条消息 “%v”\n", msgObj.Author.Username, msgObj.Content)
+				b.rcvMsgChan <- msgObj
 			}
 		}
 	}
@@ -119,7 +128,7 @@ func (b *BotClient) EstablishWSConnection() {
 	conn.Close()
 }
 
-func (b *BotClient) readMessageHandler(conn *websocket.Conn, ch chan []byte) {
+func (b *BotClient) wsReadMessageHandler(conn *websocket.Conn, ch chan []byte) {
 	for {
 		_, bytes, err := conn.ReadMessage()
 		if err != nil {
@@ -127,6 +136,72 @@ func (b *BotClient) readMessageHandler(conn *websocket.Conn, ch chan []byte) {
 		}
 		ch <- bytes
 	}
+}
+
+func (b *BotClient) receiveMessageHandler() {
+	for {
+		msg := <-b.rcvMsgChan
+		username := msg.Author.Username
+		content := msg.Content
+
+		mentionedMe := false
+		for _, user := range msg.Mentions {
+			if user.Bot {
+				mentionedMe = true
+				break
+			}
+		}
+
+		if mentionedMe {
+			//sLen := len(content)
+			//begin := rand.Intn(sLen)
+			//var end int
+			//if begin == sLen {
+			//	begin = 0
+			//	end = sLen
+			//} else {
+			//	end = begin + 1 + rand.Intn(sLen-begin-1)
+			//}
+			quote := string(content)
+
+			sentence := fmt.Sprintf("%v 你好呀，我觉得你说的这句话中，\"%v\"最有道理", username, quote)
+			request := SendMessageRequest{
+				channelId:        msg.ChannelId,
+				Content:          sentence,
+				MessageReference: &MessageReferenceVo{MessageId: msg.Id},
+			}
+
+			b.sndMsgChan <- request
+		} else if rand.Intn(1000) >= 600 {
+			request := SendMessageRequest{
+				channelId: msg.ChannelId,
+				Content:   "(小狗正在偷听你们说话)",
+			}
+			b.sndMsgChan <- request
+		}
+
+	}
+}
+
+func (b *BotClient) sendMessageHandler() {
+	for {
+		request := <-b.sndMsgChan
+		b.sendMessage(request)
+	}
+}
+
+func (b *BotClient) sendMessage(request SendMessageRequest) {
+	bytes, _ := json.Marshal(request)
+	body := string(bytes)
+	req := b.getRequest(POST, fmt.Sprintf("/channels/%v/messages", request.channelId), &body)
+	req.Header.Add("Content-Type", "application/json")
+	response, err := b.httpClient.Do(req)
+	if err != nil {
+		log.Printf("sendMessage Error: %v. Request: %v", err.Error(), body)
+	}
+
+	raw, _ := io.ReadAll(response.Body)
+	log.Printf("sendMessage request: %v response: %v %v\n", request, response, string(raw))
 }
 
 func getOp(raw []byte) OpMessage {
