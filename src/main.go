@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/NintenSAGA/SamoyedQQBot/src/botclient"
 	"log"
 	"os"
 )
@@ -9,12 +8,12 @@ import (
 func main() {
 	botToken := os.Getenv("BOT_TOKEN")
 	if len(botToken) == 0 {
-		log.Panicln(botToken)
+		log.Panicln("Missing env BOT_TOKEN")
 	}
 
 	log.Printf("BOT_TOKEN = %v\n", botToken)
 
-	client := botclient.CreateBotClient(botToken)
+	client := CreateBotClient(botToken)
 	url := client.GetWebSocketUrl()
 	println(url)
 
