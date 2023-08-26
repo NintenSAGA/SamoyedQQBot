@@ -26,6 +26,63 @@ type UrlResponse struct {
 type InitMessage struct {
 	Op int
 	D  struct {
-		HeartbeatInterval int
+		HeartbeatInterval int `json:"heartbeat_interval"`
 	}
+}
+
+type IdentifyMessage struct {
+	Op int       `json:"op"`
+	D  IdentifyD `json:"d"`
+}
+
+type IdentifyD struct {
+	Token      string            `json:"token"`
+	Intents    int               `json:"intents"`
+	Shard      []int             `json:"shard"`
+	Properties map[string]string `json:"properties"`
+}
+
+type ReadyEventMessage struct {
+	Op int
+	S  int
+	T  string
+	D  struct {
+		Version   int
+		SessionId string `json:"session_id"`
+		User      struct {
+			Id       string
+			Username string
+			Bot      bool
+		}
+		Shard []int
+	}
+}
+
+type HeartbeatMessage struct {
+	Op int  `json:"op"`
+	D  *int `json:"d"`
+}
+
+type OpMessage struct {
+	Op int
+	S  int
+	T  string
+	Id string
+	D  json.RawMessage
+}
+
+type MessageVO struct {
+	Id        string   `json:"id"`
+	ChannelId string   `json:"channel_id"`
+	GuildId   string   `json:"guild_id"`
+	Content   string   `json:"content"`
+	Author    UserVO   `json:"author"`
+	Mentions  []UserVO `json:"mentions"`
+}
+
+type UserVO struct {
+	Id       string `json:"id"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+	Bot      string `json:"bot"`
 }
