@@ -2,32 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/huichen/sego"
-	"log"
-	"os"
 	"strings"
 )
 
 type Solver struct {
-	seg  *sego.Segmenter
 	dict *Dict
 }
 
 func createSolver() *Solver {
 	return &Solver{
-		seg:  createSeg(),
 		dict: createDict(),
 	}
-}
-
-func createSeg() *sego.Segmenter {
-	seg := sego.Segmenter{}
-	dictPath := os.Getenv("DICT_PATH")
-	if len(dictPath) == 0 {
-		log.Panicln("Missing env DICT_PATH")
-	}
-	seg.LoadDictionary(dictPath)
-	return &seg
 }
 
 func (s *Solver) generateAnswer(username string, content string) string {
