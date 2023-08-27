@@ -23,8 +23,9 @@ func (s *Solver) generateAnswer(username string, content string) string {
 
 		result, existed := s.dict.getMatchingWord(content)
 		if !existed {
-			s.dict.Reset()
-			return fmt.Sprintf("小狗找不到了！小狗投降！我们重来吧！")
+			s.dict.Current = content
+			msg := fmt.Sprintf("小狗找不到了！小狗决定让你一盘！现在的单词是“%v”", content)
+			return msg
 		}
 
 		return result
@@ -34,10 +35,10 @@ func (s *Solver) generateAnswer(username string, content string) string {
 			s.dict.Reset()
 			return "汪汪好的！现在重新开始游戏～～"
 		default:
-			return fmt.Sprintf("汪汪，怎么了！？\n我是会玩英语单词接龙的小狗！\n" +
-				"* 如果你要开始接龙，请输入一个单词！\n" +
-				"* 如果要重开，那就告诉我“重来”！\n" +
-				"* 对了，找我的时候不要忘记 @我 哦！")
+			return fmt.Sprintf("汪汪，怎么了！？\n我是会玩英语单词接龙的小狗！\n现在的单词是“%v”\n"+
+				"* 如果你要开始接龙，请输入一个单词！\n"+
+				"* 如果要重开，那就告诉我“重来”！\n"+
+				"* 对了，找我的时候不要忘记 @我 哦！", s.dict.Current)
 
 		}
 
@@ -46,7 +47,7 @@ func (s *Solver) generateAnswer(username string, content string) string {
 
 func isPureLetter(s string) bool {
 	for _, r := range s {
-		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && r != '-' {
 			return false
 		}
 	}

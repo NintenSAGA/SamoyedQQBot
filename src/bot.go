@@ -119,12 +119,17 @@ func (b *BotClient) EstablishWSConnection() {
 	interval := time.Millisecond * time.Duration(heartbeatInterval)
 	log.Printf("Heartbeat interval: %v\n", interval)
 	timer := time.NewTimer(interval)
+
+outer:
 	for {
 		select {
 		case <-timer.C:
 			send(conn, HeartbeatMessage{Op: 1, D: latestMessage})
 			timer.Reset(interval)
 		case msg := <-readCh:
+			if msg == nil {
+				break outer
+			}
 			logReceived(msg)
 			opMsg := getOp(msg)
 			latestMessage = &opMsg.S
@@ -139,13 +144,16 @@ func (b *BotClient) EstablishWSConnection() {
 	}
 
 	conn.Close()
+	b.EstablishWSConnection()
 }
 
 func (b *BotClient) wsReadMessageHandler(conn *websocket.Conn, ch chan []byte) {
 	for {
 		_, bytes, err := conn.ReadMessage()
 		if err != nil {
-			log.Panicln(err)
+			log.Printf(err.Error())
+			ch <- nil
+			break
 		}
 		ch <- bytes
 	}

@@ -27,7 +27,20 @@ func createDict() *Dict {
 }
 
 func (d *Dict) Reset() {
-	d.initDict()
+	d.resetDict()
+}
+
+func (d *Dict) resetDict() {
+	m := d.dictTree.ToMap()
+	for k, _ := range m {
+		if len(k) <= 1 {
+			m[k] = false
+		} else {
+			m[k] = true
+		}
+	}
+	d.dictTree = radix.NewFromMap(m)
+	d.Current = ""
 }
 
 func (d *Dict) initDict() {
