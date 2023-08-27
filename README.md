@@ -2,7 +2,7 @@
 
 > 一个会英语单词接龙的 QQ 机器人
 
-https://github.com/NintenSAGA/SamoyedQQBot/assets/72867349/d22db241-d8a6-4710-aa86-07ec018e8a85
+https://github.com/NintenSAGA/SamoyedQQBot/assets/72867349/ef3660fb-0f57-4bad-96fb-77087438072b
 
 ## 部署
 
